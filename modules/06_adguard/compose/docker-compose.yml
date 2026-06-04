@@ -1,0 +1,9 @@
+services:
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: homelab_adguard
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /fastpool/adguard/work:/opt/adguardhome/work
+      - /fastpool/adguard/conf:/opt/adguardhome/conf

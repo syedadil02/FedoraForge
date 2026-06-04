@@ -1,0 +1,12 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: homelab_nginx
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /fastpool/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /fastpool/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /fastpool/nginx/certs:/etc/nginx/certs:ro
+      - /fastpool/nginx/logs:/var/log/nginx
+

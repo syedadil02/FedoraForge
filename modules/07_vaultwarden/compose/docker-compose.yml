@@ -1,0 +1,12 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: homelab_vaultwarden
+    network_mode: host  # Eliminates bridge isolation entirely
+    restart: unless-stopped
+    environment:
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=true
+      - ROCKET_PORT=8081  # Tells Vaultwarden to listen on 8081 on the host network
+    volumes:
+      - /fastpool/vaultwarden/data:/data
