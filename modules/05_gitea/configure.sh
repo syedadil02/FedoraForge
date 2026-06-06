@@ -11,17 +11,18 @@ inject_nginx_proxy_routing() {
     log_info "Injecting Gitea reverse proxy routing matrix into Nginx..."
 
     # Drop a configuration file directly into Nginx's ZFS runtime folder
+    # CORRECTED: Listens on 8443 and maps cleanly to internal host port 3000
     cat << EOF > /fastpool/nginx/conf.d/gitea.conf
 server {
-    listen 443 ssl;
-    server_name gitea.${FULL_DOMAIN};
+    listen 8443 ssl;
+    server_name _;
 
     ssl_certificate /etc/nginx/certs/ts.crt;
     ssl_certificate_key /etc/nginx/certs/ts.key;
 
     location / {
-        proxy_pass http://127.0.0.1:3000; # Points directly to Gitea container via host interface
-        proxy_set_header Host \$host;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host \$host:\$server_port;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
@@ -31,7 +32,7 @@ EOF
 
     # Gracefully reload Nginx configuration without dropping active connections
     log_info "Reloading Nginx runtime configuration parameters..."
-    docker exec homelab_nginx nginx -s reload || exit 1
+    docker exec homelab_nginx nginx -t && docker exec homelab_nginx nginx -s reload || exit 1
 }
 
 launch_gitea_stack() {
@@ -53,7 +54,6 @@ launch_gitea_stack() {
     fi
 
     # 3. Bring up the stack natively using 'up -d'.
-    # (The port mapping 127.0.0.1:3000:3000 belongs inside your docker-compose.yml file now)
     docker compose up -d || exit 1
 
     # Health Verification Loops
