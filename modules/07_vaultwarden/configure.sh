@@ -10,37 +10,32 @@ FULL_DOMAIN="${TS_HOSTNAME}.${TS_TAILNET}"
 inject_nginx_vault_routing() {
     log_info "Injecting Vaultwarden proxy profiles into Nginx core..."
 
+    # CORRECTED: Added backslashes to escape all native Nginx routing variables
     cat << EOF > /fastpool/nginx/conf.d/vaultwarden.conf
 server {
-    listen 443 ssl;
-    server_name vault.${FULL_DOMAIN};
+    listen 8444 ssl;
+    server_name _;
 
     ssl_certificate /etc/nginx/certs/ts.crt;
     ssl_certificate_key /etc/nginx/certs/ts.key;
 
-    # Core Web Vault Application
     location / {
         proxy_pass http://127.0.0.1:8081;
-        proxy_set_header Host \$host;
+        proxy_set_header Host \$host:\$server_port;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-    }
 
-    # Real-Time WebSocket Synchronization Hub
-    location /notifications/hub {
-        proxy_pass http://127.0.0.1:8081;
+        proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
 }
 EOF
 
-    log_info "Triggering hot reload on Nginx configuration blocks..."
-    docker exec homelab_nginx nginx -s reload || exit 1
+    log_info "Verifying syntax and triggering hot reload on Nginx configuration..."
+    # CORRECTED: Runs a configuration pre-flight validation check before applying changes
+    docker exec homelab_nginx nginx -t && docker exec homelab_nginx nginx -s reload || exit 1
 }
 
 launch_vaultwarden() {
