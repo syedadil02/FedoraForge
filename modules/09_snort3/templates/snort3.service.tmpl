@@ -1,0 +1,21 @@
+[Unit]
+Description=Snort3 Lightweight Network Intrusion Detection System Engine
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${SNORT_CONF_DIR}
+
+ExecStart=/usr/local/bin/snort \
+    -c ${SNORT_CONF_DIR}/snort.lua \
+    --daq-dir /usr/local/lib/daq \
+    -i ${SNORT_INTERFACE} \
+    -s 65535 \
+    -k none \
+    -l ${SNORT_LOG_DIR}
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

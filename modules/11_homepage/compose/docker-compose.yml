@@ -1,0 +1,14 @@
+services:
+  homepage:
+    container_name: homepage
+    image: ghcr.io/gethomepage/homepage:latest
+    environment:
+      - PUID=${SYSTEM_UID:-1000}
+      - PGID=${SYSTEM_GID:-1000}
+      - HOMEPAGE_ALLOWED_HOSTS=${TAILSCALE_HOSTNAME:-homelab-staging-2}.${TAILSCALE_TAILNET:-tailfb0549.ts.net}
+    volumes:
+      - /fastpool/homepage/config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro,z # Read-only access for live container stats
+    ports:
+      - "8085:3000" # Maps host port 8080 to internal web engine port 3000
+    restart: unless-stopped

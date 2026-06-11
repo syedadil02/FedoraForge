@@ -1,0 +1,17 @@
+services:
+  syncthing:
+    container_name: syncthing
+    image: syncthing/syncthing:latest
+    hostname: ${TAILSCALE_HOSTNAME:-homelab-staging}-syncthing
+    environment:
+      - PUID=${SYSTEM_UID:-1000}
+      - PGID=${SYSTEM_GID:-1000}
+    volumes:
+      - /fastpool/syncthing/config:/var/syncthing/config
+      - /datapool/syncthing/data:/var/syncthing/data
+    ports:
+      - "8384:8384"          # Web GUI (routed out to host interface)
+      - "22000:22000/tcp"    # Protocol listening port
+      - "22000:22000/udp"    # Protocol listening port (QUIC)
+      - "21027:21027/udp"    # Local discovery broadcasts
+    restart: unless-stopped

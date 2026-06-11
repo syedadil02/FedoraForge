@@ -1,0 +1,11 @@
+[Unit]
+Description=Set ${SNORT_INTERFACE} promiscuous mode for Snort3
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ip link set ${SNORT_INTERFACE} promisc on
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
