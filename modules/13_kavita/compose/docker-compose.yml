@@ -1,0 +1,14 @@
+services:
+  kavita:
+    image: jvmilazz0/kavita:latest
+    container_name: homelab_kavita
+    environment:
+      - PUID=${SYSTEM_UID:-1000}
+      - PGID=${SYSTEM_GID:-1000}
+      - TZ=${TIMEZONE:-UTC}
+    volumes:
+      - ${CONFIG_BASE_DIR:-/fastpool}/shares/books:/manga:ro
+      - ${CONFIG_BASE_DIR:-/fastpool}/kavita/config:/kavita/config
+    ports:
+      - "5000:5000"
+    restart: unless-stopped

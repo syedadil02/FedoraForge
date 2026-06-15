@@ -1,0 +1,13 @@
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: homelab_searxng
+    environment:
+      - PUID=${SYSTEM_UID:-1000}
+      - PGID=${SYSTEM_GID:-1000}
+      - SEARXNG_SECRET=${SEARXNG_SECRET_KEY} # Passes key straight into the image runtime
+    volumes:
+      - ${CONFIG_BASE_DIR:-/fastpool}/searxng:/etc/searxng:ro
+    ports:
+      - "8888:8080"
+    restart: unless-stopped
