@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# modules/13_homepage/configure.sh
+# modules/11_homepage/configure.sh
 set -euo pipefail
 source "$(dirname "$0")/../../lib_utils.sh"
 
@@ -12,8 +12,8 @@ inject_nginx_dashboard_routing() {
 
     cat << EOF > /fastpool/nginx/conf.d/homepage.conf
 server {
-    listen 80; # Accessible via root Tailscale IP HTTP call
-    listen 8440 ssl; # Accessible via secure port map
+    listen 80; # Dropped default_server here to respect internal nginx.conf targets
+    listen 443 ssl default_server; 
     server_name ${FULL_DOMAIN};
 
     ssl_certificate /etc/nginx/certs/ts.crt;
@@ -27,6 +27,7 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
         
         # Web socket upgrade parameters for live terminal/resource streaming
+        proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
     }

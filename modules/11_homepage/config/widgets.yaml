@@ -1,10 +1,14 @@
-title: Homelab Dashboard
-background:
-  style: Cover
-  opacity: 50
-headerStyle: Clean
-layout:
-  Core Infrastructure:
-    columns: 2
-  Applications:
-    columns: 3
+# modules/11_homepage/config/widgets.yaml
+- logo:
+    icon: https://raw.githubusercontent.com/gethomepage/homepage/main/public/android-chrome-192x192.png
+
+- datetime:
+    text_size: xl
+    format:
+      date: style:long
+      time: style:short
+      hour12: true
+
+- search:
+    provider: duckduckgo
+    target: _blank

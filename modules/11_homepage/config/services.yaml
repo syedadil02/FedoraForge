@@ -2,23 +2,28 @@
 - Core Infrastructure:
     - Gitea:
         icon: gitea.png
-        href: https://homelab-staging-2.tailfb0549.ts.net:8443 # <-- Clean Secure Proxy Target
+        href: https://homelab-staging-2.tailfb0549.ts.net:8443
         description: Source Control Matrix
         container: homelab_gitea
     - Vaultwarden:
         icon: vaultwarden.png
-        href: https://homelab-staging-2.tailfb0549.ts.net:8444 # <-- Clean Secure Proxy Target
+        href: https://homelab-staging-2.tailfb0549.ts.net:8444
         description: Encrypted Secret Vault
         container: homelab_vaultwarden
+    - Wolf Stream:
+        icon: moonlight.png
+        href: http://homelab-staging-2.tailfb0549.ts.net:8585
+        description: Low-Latency Display Node
+        container: homelab_wolf_den
 
 - Applications:
     - Immich:
         icon: immich.png
-        href: https://homelab-staging-2.tailfb0549.ts.net:8445 # <-- Clean Secure Proxy Target
+        href: https://homelab-staging-2.tailfb0549.ts.net:8445
         description: Photo Backup Pool
         container: immich_server
     - Syncthing:
         icon: syncthing.png
-        href: https://homelab-staging-2.tailfb0549.ts.net:8384 # <-- Clean Secure Proxy Target
+        href: https://homelab-staging-2.tailfb0549.ts.net:8384
         description: Continuous File Sync
         container: syncthing
