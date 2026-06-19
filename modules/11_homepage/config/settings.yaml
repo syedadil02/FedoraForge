@@ -1,3 +1,4 @@
+# modules/11_homepage/config/settings.yaml
 title: Homelab Dashboard
 background:
   style: Cover
@@ -5,6 +6,10 @@ background:
 headerStyle: Clean
 layout:
   Core Infrastructure:
-    columns: 2
-  Applications:
     columns: 3
+  Applications & Sync:
+    columns: 3
+  Media & Streaming:
+    columns: 3
+  Network Security & Shares:
+    columns: 2

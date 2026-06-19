@@ -1,0 +1,57 @@
+services:
+  wolf:
+    image: ghcr.io/games-on-whales/wolf:stable
+    container_name: homelab_wolf
+    network_mode: host
+    ipc: host
+    privileged: true
+    restart: unless-stopped
+    
+    environment:
+      - TZ=${TIMEZONE:-UTC}
+      - XDG_RUNTIME_DIR=/tmp/runtime-root
+      - WOLF_SOCKET_PATH=/var/run/wolf/wolf.sock
+    
+    volumes:
+      - ${CONFIG_BASE_DIR}/wolf/config:/etc/wolf
+      - ${CONFIG_BASE_DIR}/wolf/logs:/var/log/wolf
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /tmp/runtime-root:/tmp/runtime-root:rw
+      # Shared IPC socket mapping for Wolf Den communication
+      - /var/run/wolf:/var/run/wolf:rw
+      - /dev/input:/dev/input:ro
+      - /run/udev:/run/udev:ro
+    
+    # Removed /dev/dri to bypass virtual VirtIO DRM validation crashes in Staging VM
+    devices:
+      - /dev/uinput:/dev/uinput
+      - /dev/uhid:/dev/uhid
+    
+    device_cgroup_rules:
+      - 'c 13:* rmw'
+    
+    security_opt:
+      - seccomp=unconfined
+    
+    deploy:
+      resources:
+        limits:
+          cpus: "${WOLF_CPU_LIMIT}"
+          memory: "${WOLF_MEMORY_LIMIT}"
+        reservations:
+          cpus: "${WOLF_CPU_RESERVE}"
+          memory: "${WOLF_MEMORY_RESERVE}"
+
+  wolf-den:
+    image: ghcr.io/games-on-whales/wolf-den:stable
+    container_name: homelab_wolf_den
+    ports:
+      - "8585:8080"
+    environment:
+      - WOLF_SOCKET_PATH=/var/run/wolf/wolf.sock
+    volumes:
+      - /var/run/wolf:/var/run/wolf:ro
+      - ${CONFIG_BASE_DIR}/wolf/wolf-den:/app/wolf-den/
+    depends_on:
+      - wolf
+    restart: unless-stopped

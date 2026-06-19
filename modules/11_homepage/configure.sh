@@ -13,7 +13,8 @@ inject_nginx_dashboard_routing() {
     cat << EOF > /fastpool/nginx/conf.d/homepage.conf
 server {
     listen 80; # Dropped default_server here to respect internal nginx.conf targets
-    listen 443 ssl default_server; 
+    listen 443 ssl; # Dropped default_server here to respect internal nginx.conf targets
+
     server_name ${FULL_DOMAIN};
 
     ssl_certificate /etc/nginx/certs/ts.crt;
@@ -25,7 +26,7 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-        
+
         # Web socket upgrade parameters for live terminal/resource streaming
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -41,10 +42,10 @@ EOF
 launch_dashboard() {
     SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
     cd "${SCRIPT_DIR}/compose"
-    
+
     log_info "Recycling out-of-date dashboard runtime layers..."
     docker compose down 2>/dev/null || true
-    
+
     log_info "Starting Homepage UI compilation engine..."
     docker compose up -d --force-recreate || exit 1
     log_succ "Homepage Dashboard engine online!"
