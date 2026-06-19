@@ -51,14 +51,14 @@ configure_host_firewall() {
 provision_adguard_storage() {
     log_info "Allocating storage footprints on NVMe pools..."
 
+    # 1. Cleaned up the path typo and added the -p flag to safely build parent paths if missing
     if ! zfs list -H -o name | grep -q "^fastpool/adguard$"; then
-        zfs create fastpool/fastpool/adguard || zfs create fastpool/adguard || true
+        zfs create -p fastpool/adguard
     fi
 
-    # Handle directory tree boundaries safely
-    if [ ! -d "/fastpool/adguard" ]; then
-        mkdir -p /fastpool/adguard/{work,conf}
-    fi
+    # 2. Enforce the directory paths with explicit execution guards
+    log_info "Enforcing structural layout paths inside ZFS storage matrix..."
+    mkdir -p /fastpool/adguard/work /fastpool/adguard/conf
 
     # Seed initial configuration parameters to force port 8080 setup rules
     cat << EOF > /fastpool/adguard/conf/AdGuardHome.yaml
