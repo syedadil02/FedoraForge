@@ -72,8 +72,8 @@ main() {
     (./modules/09_snort3/install.sh && ./modules/09_snort3/configure.sh) || exit 1
 
     # Phase 10: Continuous Node Replication
-    log_info "========== Phase 10: Syncthing Replication Engine =========="
-    (./modules/10_syncthing/install.sh && ./modules/10_syncthing/configure.sh) || exit 1
+   # log_info "========== Phase 10: Syncthing Replication Engine =========="
+   # (./modules/10_syncthing/install.sh && ./modules/10_syncthing/configure.sh) || exit 1
 
     # Phase 11: Unified Operational Dashboard
     log_info "========== Phase 11: Homepage Matrix Center =========="

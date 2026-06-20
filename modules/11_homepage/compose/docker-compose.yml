@@ -8,7 +8,9 @@ services:
       - HOMEPAGE_ALLOWED_HOSTS=${TAILSCALE_HOSTNAME:-homelab-staging-2}.${TAILSCALE_TAILNET:-tailfb0549.ts.net}
     volumes:
       - /fastpool/homepage/config:/app/config
+      - /fastpool/homepage/icons:/app/public/icons
       - /var/run/docker.sock:/var/run/docker.sock:ro,z # Read-only access for live container stats
     ports:
       - "8085:3000" # Maps host port 8080 to internal web engine port 3000
     restart: unless-stopped
+

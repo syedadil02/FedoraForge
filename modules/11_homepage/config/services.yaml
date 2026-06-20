@@ -42,26 +42,23 @@
         container: homelab_kavita
     - FreshRSS:
         icon: freshrss.png
-        href: http://homelab-staging-2.tailfb0549.ts.net:8449 # Update port if shifted off raw bridge
+        href: http://homelab-staging-2.tailfb0549.ts.net:8449
         description: RSS Feed Aggregator
         container: homelab_freshrss
     - Wolf Stream:
-        icon: wolf.svg
+        icon: /icons/wolf.svg
         href: http://homelab-staging-2.tailfb0549.ts.net:8585
         description: Low-Latency Display Node
         container: homelab_wolf_den
 
 - Network Security & Shares:
     - Samba Daemon:
-        icon: samba
-        # Removing href completely converts the card into an informative block
+        icon: /icons/samba.png
         description: "SMB Network Share Pool"
-        server: homelab-staging-2.tailfb0549.ts.net
-        # Using custom text keys to display clear connection commands
-        container:
-            - text: "Linux: smb://homelab-staging-2.tailfb0549.ts.net/shares"
-            - text: "Windows: \\\\homelab-staging-2.tailfb0549.ts.net\\shares"
+        custom:
+            Linux Mount: "smb://homelab-staging-2.tailfb0549.ts.net/shares"
+            Windows Mount: "\\\\homelab-staging-2.tailfb0549.ts.net\\shares"
     - Snort 3 IDS:
-        icon: snort.png 
+        icon: /icons/snort.png
         description: Intrusion Detection Monitoring
         server: localhost

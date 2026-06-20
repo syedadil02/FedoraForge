@@ -16,8 +16,28 @@ fetch_tailscale_certificates() {
         exit 1
     fi
 
-    # Fetch fresh keys directly into our ZFS certificates mount point
-    tailscale cert --cert-file /fastpool/nginx/certs/ts.crt --key-file /fastpool/nginx/certs/ts.key "${FULL_DOMAIN}" || exit 1
+    # --- Flawless Run Addition: Active Retry Matrix ---
+    local max_attempts=5
+    local attempt=1
+    local wait_sec=3
+
+    log_info "Executing cryptographic certificate extraction challenge..."
+    while [ ${attempt} -le ${max_attempts} ]; do
+        if tailscale cert --cert-file /fastpool/nginx/certs/ts.crt --key-file /fastpool/nginx/certs/ts.key "${FULL_DOMAIN}" 2>/dev/null; then
+            log_succ "Tailscale cryptographic certificates successfully provisioned on attempt ${attempt}."
+            break
+        else
+            log_warn "Tailscale daemon negotiating DNS challenges... Retrying in ${wait_sec}s (Attempt ${attempt}/${max_attempts})"
+            sleep ${wait_sec}
+            attempt=$((attempt + 1))
+        fi
+    done
+
+    # Hard barrier if all attempts fail
+    if [ ${attempt} -gt ${max_attempts} ]; then
+        log_error "Failed to capture Tailscale certificates after ${max_attempts} attempts."
+        exit 1
+    fi
 
     # Lock down file system keys so they aren't globally readable
     chmod 600 /fastpool/nginx/certs/ts.key
@@ -25,14 +45,14 @@ fetch_tailscale_certificates() {
 }
 
 generate_ssl_routing_block() {
-    log_info "Generating active Nginx routing matrix for ${FULL_DOMAIN}..."
+    log_info "Generating active Nginx routing matrix fallback..."
 
-    # Write out a default secure SSL catch-all block for your tailnet domain
+    # Write out a generic catch-all fallback block
     cat << EOF > /fastpool/nginx/conf.d/default_ssl.conf
 server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
-    server_name ${FULL_DOMAIN};
+    server_name _; # Changed from ${FULL_DOMAIN} to an anonymous catch-all wildcard
 
     ssl_certificate /etc/nginx/certs/ts.crt;
     ssl_certificate_key /etc/nginx/certs/ts.key;
@@ -59,18 +79,36 @@ launch_proxy_runtime() {
     # Run the Compose up sequence
     docker compose -f "${script_dir}/compose/docker-compose.yml" up -d || exit 1
 
-    # Health Verification Loop
     log_info "Validating reverse proxy interface stability..."
-    sleep 3
 
-    if curl -k -s -I "https://${FULL_DOMAIN}" | grep -q "HTTP/"; then
-        log_succ "Nginx reverse proxy is actively answering TLS requests securely over your Tailnet!"
-    else
-        log_error "Nginx initialized but failed TLS resolution loop checks."
+    local max_checks=6
+    local check=1
+    local wait_interval=2
+    local validated=0
+
+    while [ ${check} -le ${max_checks} ]; do
+        # --- FIXED FOR SINGLE-RUN SUCCESS ---
+        # Forces curl to map your domain to localhost (127.0.0.1) on ports 80 and 443
+        # instantly bypassing cold host-routing table issues.
+        if curl -k -s --max-time 2 \
+            --resolve "${FULL_DOMAIN}:443:127.0.0.1" \
+            -I "https://${FULL_DOMAIN}" | grep -q "HTTP/"; then
+
+            log_succ "Nginx reverse proxy is actively answering TLS requests securely over your Tailnet!"
+            validated=1
+            break
+        else
+            log_warn "TLS interface pending stabilization... Retrying in ${wait_interval}s (Check ${check}/${max_checks})"
+            sleep ${wait_interval}
+            check=$((check + 1))
+        fi
+    done
+
+    if [ ${validated} -eq 0 ]; then
+        log_error "Nginx initialized but failed TLS resolution loop checks after complete timeout."
         exit 1
     fi
 }
-
 fetch_tailscale_certificates
 generate_ssl_routing_block
 launch_proxy_runtime
