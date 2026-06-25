@@ -1,0 +1,25 @@
+services:
+  cadvisor:
+    container_name: homelab_cadvisor
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro,rslave
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - ${CONFIG_BASE_DIR:-/fastpool}/docker/:${CONFIG_BASE_DIR:-/fastpool}/docker/:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - '--port=9338'
+      - '--housekeeping_interval=30s'
+      - '--docker_only=true'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9338/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3

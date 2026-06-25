@@ -1,4 +1,4 @@
-#!/bin/env/env bash
+#!/usr/bin/env bash
 
 # modules/00_base.sh - Target Baseline & Dependency Alignment
 
@@ -11,6 +11,14 @@ fi
 
 update_and_align_dependencies() {
     log_info "Initiating system structural upgrade for Fedora 44..."
+
+    # 0. Expand root filesystem to fill the full LVM volume
+    # Fedora's installer often creates a 38GB LVM but only formats 15GB of XFS.
+    # This ensures we use ALL available space on the root partition.
+    if command -v xfs_growfs &>/dev/null && df -T / | grep -q xfs; then
+        log_info "Expanding root XFS filesystem to fill LVM volume..."
+        xfs_growfs / 2>/dev/null || true
+    fi
 
     # 1. Speed up DNF5 configuration optimization constraints
     local dnf_conf="/etc/dnf/dnf.conf"
@@ -29,7 +37,7 @@ update_and_align_dependencies() {
     # 3. Consolidate Compilation and Runtime System Dependencies
     # Gathering tools required globally across your storage, routing, and detection stacks
     local core_deps=(
-        "curl" "wget" "git" "tar" "sed" "gawk" "util-linux"
+        "curl" "wget" "git" "tar" "sed" "gawk" "util-linux" "jq"
         "kernel-devel" "kernel-headers" "dkms" "elfutils-libelf-devel" # Crucial for bare-metal ZFS modules
         "iptables-nft" "systemd-resolved"                              # Core networking foundations
         "gcc" "gcc-c++" "make" "cmake" "libpcap-devel" "luajit-devel"  # Crucial dependencies for Snort3

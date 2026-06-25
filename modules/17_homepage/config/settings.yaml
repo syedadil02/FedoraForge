@@ -1,4 +1,4 @@
-# modules/11_homepage/config/settings.yaml
+# modules/17_homepage/config/settings.yaml
 title: Homelab Dashboard
 background:
   style: Cover

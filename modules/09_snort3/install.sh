@@ -15,7 +15,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../../lib_utils.sh"
-source "${SCRIPT_DIR}/../../environment/staging.env"
+
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "${SCRIPT_DIR}/../../environment/staging.env"
+fi
 
 # ─── Defaults (override via staging.env or export before calling) ─────────────
 LIBDAQ_VERSION="${LIBDAQ_VERSION:-3.0.27}"

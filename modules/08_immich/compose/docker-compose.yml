@@ -2,13 +2,12 @@ services:
   immich-server:
     container_name: immich_server
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    network_mode: host
     volumes:
       - ${UPLOAD_LOCATION}:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
-    ports:
-      - "8082:2283"
     depends_on:
       - database
       - redis
@@ -17,22 +16,23 @@ services:
   immich-machine-learning:
     container_name: immich_machine_learning
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    network_mode: host
     volumes:
       - /fastpool/immich/cache:/cache
     env_file:
       - .env
-    ports:
-      - "127.0.0.1:3003:3003"
     restart: unless-stopped
 
   redis:
     container_name: immich_redis
     image: docker.io/redis:7-alpine
+    network_mode: host
     restart: unless-stopped
 
   database:
     container_name: immich_postgres
     image: docker.io/tensorchord/pgvecto-rs:pg14-v0.3.0
+    network_mode: host
     environment:
       POSTGRES_DB: ${DB_DATABASE_NAME}
       POSTGRES_USER: ${DB_USERNAME}
@@ -40,4 +40,3 @@ services:
     volumes:
       - /fastpool/immich/db:/var/lib/postgresql/data
     restart: unless-stopped
-

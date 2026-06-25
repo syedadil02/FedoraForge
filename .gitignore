@@ -1,1 +1,2 @@
-environment/staging.env
+environment/active.env
+.deploy_state

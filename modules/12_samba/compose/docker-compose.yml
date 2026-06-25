@@ -8,6 +8,6 @@ services:
       - USERID=${SYSTEM_UID:-1000}
       - GROUPID=${SYSTEM_GID:-1000}
     volumes:
-      - ${CONFIG_BASE_DIR:-/fastpool}/shares:/storage:z
-    command: -u "${SAMBA_USER};${SAMBA_PASSWORD}" -s "FastPool-Share;/storage;yes;no;no;${SAMBA_USER}"
+      - ${STORAGE_BASE_DIR:-/datapool}/shares:/storage:z
+    command: -u "${SAMBA_USER};${SAMBA_PASSWORD}" -s "DataPool-Share;/storage;yes;no;no;${SAMBA_USER}"
     restart: unless-stopped

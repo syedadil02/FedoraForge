@@ -1,0 +1,17 @@
+services:
+  node-exporter:
+    container_name: homelab_node_exporter
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    # Essential for reading host networking and process performance metrics accurately
+    network_mode: host
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro,rslave
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)'

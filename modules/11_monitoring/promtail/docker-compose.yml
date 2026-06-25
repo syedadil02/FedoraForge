@@ -1,0 +1,12 @@
+services:
+  promtail:
+    container_name: homelab_promtail
+    image: grafana/promtail:latest
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${CONFIG_BASE_DIR:-/fastpool}/monitoring/promtail:/etc/promtail:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /run/log/journal:/run/log/journal:ro
+    command: -config.file=/etc/promtail/promtail-config.yaml

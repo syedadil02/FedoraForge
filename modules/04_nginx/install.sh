@@ -3,17 +3,32 @@
 set -euo pipefail
 source "$(dirname "$0")/../../lib_utils.sh"
 
-# Staging Environment Variables Fallback
-TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-staging}"
-TS_TAILNET="${TAILSCALE_TAILNET:-tailfb0549.ts.net}"
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "$(dirname "$0")/../../environment/staging.env"
+fi
+
+TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-server}"
+TS_TAILNET="${TAILSCALE_TAILNET:-ts.net}"
 FULL_DOMAIN="${TS_HOSTNAME}.${TS_TAILNET}"
 
 verify_host_state() {
     log_info "Verifying host network state for Nginx proxy binding..."
 
-    # Check if anything is already occupying port 80 or 443 on the host
+    # On re-runs, our own Nginx container may still be occupying ports 80/443.
+    # Tear it down first so the port check only catches foreign conflicts.
+    if docker ps -q -f name=homelab_nginx 2>/dev/null | grep -q .; then
+        log_info "Stopping existing homelab_nginx container from a previous run..."
+        local script_dir
+        script_dir=$(dirname "$(readlink -f "$0")")
+        docker compose -f "${script_dir}/compose/docker-compose.yml" down 2>/dev/null || \
+            docker rm -f homelab_nginx 2>/dev/null || true
+        sleep 2
+    fi
+
+    # Now check if something ELSE is occupying the ports
     if ss -tulpn | grep -E -q ":(80|443) "; then
-        log_error "Port conflict detected! Another service is running on port 80 or 443."
+        log_error "Port conflict detected! A non-homelab service is running on port 80 or 443."
         ss -tulpn | grep -E ":(80|443) "
         exit 1
     fi

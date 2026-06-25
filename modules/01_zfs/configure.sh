@@ -29,26 +29,44 @@ else
     exit 1
 fi
 
-# Staging disk fallback safeguards if environment variables are missing
-FAST_DISK="${STAGING_NVME_DISK:-/dev/vdb}"
-DATA_DISK="${STAGING_HDD_DISK:-/dev/vdc}"
+# Disk variable mapping — set by the wizard (active.env) or fallback for VMs
+FAST_DISK="${FASTPOOL_DISK:-/dev/vdb}"
+DATA_DISK="${DATAPOOL_DISK:-/dev/vdc}"
 
 create_storage_pools() {
     log_info "Evaluating bare-metal disk topology for ZFS allocation..."
 
     # 1. Provision Fastpool (NVMe)
     if ! zpool list -H -o name | grep -q "^fastpool$"; then
-        log_info "Initializing 'fastpool' on target device: ${FAST_DISK}"
-        # -f forces creation, -O sets root pool properties
-        zpool create -f -O compression=lz4 -O atime=off -m /fastpool fastpool "${FAST_DISK}" || return 1
+        log_info "Attempting to import existing 'fastpool'..."
+        if zpool import -f fastpool 2>/dev/null; then
+            log_succ "Successfully imported 'fastpool' from existing disk state."
+        else
+            log_info "Initializing 'fastpool' on target device: ${FAST_DISK}"
+            # If the script previously crashed, a stale /fastpool directory might exist.
+            # If it's a regular directory and NOT a mountpoint, remove it so zpool create works.
+            if [ -d "/fastpool" ] && ! mountpoint -q /fastpool; then
+                rm -rf /fastpool
+            fi
+            # -f forces creation, -O sets root pool properties
+            zpool create -f -O compression=lz4 -O atime=off -m /fastpool fastpool "${FAST_DISK}" || return 1
+        fi
     else
         log_info "'fastpool' already online. Skipping pool generation."
     fi
 
     # 2. Provision Datapool (HDD)
     if ! zpool list -H -o name | grep -q "^datapool$"; then
-        log_info "Initializing 'datapool' on target device: ${DATA_DISK}"
-        zpool create -f -O compression=lz4 -O atime=off -m /datapool datapool "${DATA_DISK}" || return 1
+        log_info "Attempting to import existing 'datapool'..."
+        if zpool import -f datapool 2>/dev/null; then
+            log_succ "Successfully imported 'datapool' from existing disk state."
+        else
+            log_info "Initializing 'datapool' on target device: ${DATA_DISK}"
+            if [ -d "/datapool" ] && ! mountpoint -q /datapool; then
+                rm -rf /datapool
+            fi
+            zpool create -f -O compression=lz4 -O atime=off -m /datapool datapool "${DATA_DISK}" || return 1
+        fi
     else
         log_info "'datapool' already online. Skipping pool generation."
     fi
@@ -82,11 +100,21 @@ create_service_datasets() {
         zfs create datapool/shares
     fi
 
+    # Books/Kavita dedicated share subfolder
+    if ! zfs list -H -o name | grep -q "^datapool/shares/books$"; then
+        zfs create datapool/shares/books
+    fi
+
     # Massive sequential storage for Immich photos/videos
     if ! zfs list -H -o name | grep -q "^datapool/media$"; then
         zfs create datapool/media
         # Large recordsizes prevent file system fragmentation on raw HDDs
         zfs set recordsize=1M datapool/media
+    fi
+
+    # Syncthing persistent data on HDD
+    if ! zfs list -H -o name | grep -q "^datapool/syncthing$"; then
+        zfs create datapool/syncthing
     fi
 }
 
@@ -99,7 +127,7 @@ verify_and_mount_permissions() {
     # Fix basic permissions so Docker and local processes can bind clean mount paths
     chmod 755 /fastpool /datapool
     mkdir -p /fastpool/docker /fastpool/databases /fastpool/vms
-    mkdir -p /datapool/shares /datapool/media
+    mkdir -p /datapool/shares /datapool/shares/books /datapool/media /datapool/syncthing
 
     log_succ "ZFS storage pool hierarchy successfully mounted and optimized."
 }

@@ -20,7 +20,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../../lib_utils.sh"
-source "${SCRIPT_DIR}/../../environment/staging.env"
+
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "${SCRIPT_DIR}/../../environment/staging.env"
+fi
 
 # ─── Defaults ─────────────────────────────────────────────────────────────────
 SNORT_CONF_DIR="${SNORT_CONF_DIR:-/usr/local/etc/snort}"

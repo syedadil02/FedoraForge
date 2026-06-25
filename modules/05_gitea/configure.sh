@@ -3,8 +3,13 @@
 set -euo pipefail
 source "$(dirname "$0")/../../lib_utils.sh"
 
-TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-staging-2}"
-TS_TAILNET="${TAILSCALE_TAILNET:-tailfb0549.ts.net}"
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "$(dirname "$0")/../../environment/staging.env"
+fi
+
+TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-server}"
+TS_TAILNET="${TAILSCALE_TAILNET:-ts.net}"
 FULL_DOMAIN="${TS_HOSTNAME}.${TS_TAILNET}"
 
 inject_nginx_proxy_routing() {
@@ -56,14 +61,23 @@ launch_gitea_stack() {
     # 3. Bring up the stack natively using 'up -d'.
     docker compose up -d || exit 1
 
-    # Health Verification Loops
+    # Health Verification — retry loop (Gitea needs time to run migrations on first boot)
     log_info "Awaiting service convergence verification..."
-    sleep 5
+    local success=1
+    for i in {1..15}; do
+        if docker ps --filter "name=homelab_gitea" --filter "status=running" -q | grep -q .; then
+            success=0
+            break
+        fi
+        sleep 2
+    done
 
-    if docker ps | grep -q "homelab_gitea"; then
+    if [[ $success -eq 0 ]]; then
         log_succ "Gitea stack deployed and routing securely over your private mesh network!"
     else
-        log_error "Gitea initialized but application container failed runtime health states."
+        log_error "Gitea container failed to stay running after 30s."
+        log_error "Last 20 lines of container logs:"
+        docker logs homelab_gitea --tail 20 2>&1 || true
         exit 1
     fi
 }

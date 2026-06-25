@@ -1,0 +1,11 @@
+services:
+  custom_service:
+    container_name: homelab_custom_service
+    image: hello-world:latest # Replace with your desired Docker image
+    network_mode: host      # Host networking is recommended for bare-metal performance
+    environment:
+      - TZ=${TIMEZONE:-UTC}
+    volumes:
+      - ${CONFIG_BASE_DIR}/custom_service/config:/config
+      - ${STORAGE_BASE_DIR}/custom_service/data:/data
+    restart: unless-stopped

@@ -3,8 +3,13 @@
 set -euo pipefail
 source "$(dirname "$0")/../../lib_utils.sh"
 
-TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-staging-2}"
-TS_TAILNET="${TAILSCALE_TAILNET:-tailfb0549.ts.net}"
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "$(dirname "$0")/../../environment/staging.env"
+fi
+
+TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-server}"
+TS_TAILNET="${TAILSCALE_TAILNET:-ts.net}"
 FULL_DOMAIN="${TS_HOSTNAME}.${TS_TAILNET}"
 
 inject_nginx_vault_routing() {
@@ -50,11 +55,20 @@ launch_vaultwarden() {
     docker compose up -d || exit 1
 
     # Verify container state convergence
-    sleep 3
-    if docker ps | grep -q "homelab_vaultwarden"; then
+    local success=1
+    for i in {1..10}; do
+        if docker ps --filter "name=homelab_vaultwarden" --filter "status=running" -q | grep -q .; then
+            success=0
+            break
+        fi
+        sleep 2
+    done
+
+    if [[ $success -eq 0 ]]; then
         log_succ "Vaultwarden framework deployed live across your mesh network!"
     else
-        log_error "Vaultwarden engine failed runtime verification states."
+        log_error "Vaultwarden container failed to stay running after 20s."
+        docker logs homelab_vaultwarden --tail 20 2>&1 || true
         exit 1
     fi
 }

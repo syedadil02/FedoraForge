@@ -22,7 +22,7 @@ services:
       - /dev/input:/dev/input:ro
       - /run/udev:/run/udev:ro
     
-    # Removed /dev/dri to bypass virtual VirtIO DRM validation crashes in Staging VM
+    # GPU is injected dynamically via docker-compose.override.yml for bare-metal
     devices:
       - /dev/uinput:/dev/uinput
       - /dev/uhid:/dev/uhid

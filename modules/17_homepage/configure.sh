@@ -1,19 +1,37 @@
 #!/usr/bin/env bash
-# modules/11_homepage/configure.sh
+# modules/17_homepage/configure.sh
 set -euo pipefail
 source "$(dirname "$0")/../../lib_utils.sh"
 
-TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-staging-2}"
-TS_TAILNET="${TAILSCALE_TAILNET:-tailfb0549.ts.net}"
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "$(dirname "$0")/../../environment/staging.env"
+fi
+
+TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-server}"
+TS_TAILNET="${TAILSCALE_TAILNET:-ts.net}"
 FULL_DOMAIN="${TS_HOSTNAME}.${TS_TAILNET}"
+
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+
+generate_dynamic_config() {
+    log_info "Generating dynamic Homepage configuration from templates..."
+
+    # Render services.yaml from the .tmpl file using envsubst
+    TAILSCALE_HOSTNAME="${TS_HOSTNAME}" \
+    TAILSCALE_TAILNET="${TS_TAILNET}" \
+    envsubst < "${SCRIPT_DIR}/config/services.yaml.tmpl" > /fastpool/homepage/config/services.yaml
+
+    log_succ "Homepage services.yaml rendered for domain: ${FULL_DOMAIN}"
+}
 
 inject_nginx_dashboard_routing() {
     log_info "Injecting central dashboard landing configurations into Nginx..."
 
     cat << EOF > /fastpool/nginx/conf.d/homepage.conf
 server {
-    listen 80; # Dropped default_server here to respect internal nginx.conf targets
-    listen 443 ssl; # Dropped default_server here to respect internal nginx.conf targets
+    listen 80;
+    listen 443 ssl;
 
     server_name ${FULL_DOMAIN};
 
@@ -21,13 +39,12 @@ server {
     ssl_certificate_key /etc/nginx/certs/ts.key;
 
     location / {
-        proxy_pass http://172.17.0.1:8085;
+        proxy_pass http://127.0.0.1:8085;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
 
-        # Web socket upgrade parameters for live terminal/resource streaming
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -40,7 +57,6 @@ EOF
 }
 
 launch_dashboard() {
-    SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
     cd "${SCRIPT_DIR}/compose"
 
     log_info "Recycling out-of-date dashboard runtime layers..."
@@ -51,5 +67,6 @@ launch_dashboard() {
     log_succ "Homepage Dashboard engine online!"
 }
 
+generate_dynamic_config
 launch_dashboard
 inject_nginx_dashboard_routing

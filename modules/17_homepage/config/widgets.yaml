@@ -1,4 +1,4 @@
-# modules/11_homepage/config/widgets.yaml
+# modules/17_homepage/config/widgets.yaml
 - logo:
     icon: https://raw.githubusercontent.com/gethomepage/homepage/main/public/android-chrome-192x192.png
 

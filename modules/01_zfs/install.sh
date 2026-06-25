@@ -15,18 +15,20 @@ DIST_TAG=$(rpm --eval "%{dist}")
 
 log_info "Deploying OpenZFS release repository for Fedora 44..."
 # Installs the official OpenZFS tracking configuration
-sudo dnf5 install -y "https://zfsonlinux.org/fedora/zfs-release-3-1${DIST_TAG}.noarch.rpm" || exit 1
+dnf5 install -y "https://zfsonlinux.org/fedora/zfs-release-3-1${DIST_TAG}.noarch.rpm" || exit 1
 
 log_info "Configuring DNF5 repository targets for ZFS..."
-# DNF5 native syntax to disable the testing/raw repositories and enable legacy (stable kmod)
-sudo dnf5 config-manager set_property zfs.enabled=0 || exit 1
-sudo dnf5 config-manager set_property zfs-legacy.enabled=1 || exit 1
+# DNF5 uses 'setopt' to toggle repo enabled state (writes to 99-config_manager.repo)
+dnf5 config-manager setopt zfs.enabled=0 || exit 1
+dnf5 config-manager setopt zfs-legacy.enabled=1 || exit 1
 
 log_info "Aligning current kernel tracking with compilation dependencies..."
-# Instead of guessing the string via awk, force dnf to match your exact running kernel version natively
-sudo dnf5 install -y "kernel-devel-$(uname -r)" "kernel-headers-$(uname -r)" dkms || exit 1
+# kernel-devel MUST match running kernel for DKMS module builds
+dnf5 install -y "kernel-devel-$(uname -r)" dkms || exit 1
+# kernel-headers is best-effort — not always available for the exact running kernel
+dnf5 install -y kernel-headers --skip-unavailable || true
 
 log_info "Triggering OpenZFS dkms source compilation..."
-sudo dnf5 install -y zfs || exit 1
+dnf5 install -y zfs || exit 1
 
 log_succ "ZFS package compilation stack successfully staged."

@@ -1,0 +1,14 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: homelab_prometheus
+    user: "root"
+    network_mode: host
+    volumes:
+      - /fastpool/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /fastpool/monitoring/prometheus/data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.listen-address=0.0.0.0:9091'
+    restart: unless-stopped

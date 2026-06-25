@@ -7,7 +7,7 @@ services:
       - PGID=${SYSTEM_GID:-1000}
       - TZ=${TIMEZONE:-UTC}
     volumes:
-      - ${CONFIG_BASE_DIR:-/fastpool}/shares/books:/manga:ro
+      - ${STORAGE_BASE_DIR:-/datapool}/shares/books:/manga:ro
       - ${CONFIG_BASE_DIR:-/fastpool}/kavita/config:/kavita/config
     ports:
       - "5000:5000"

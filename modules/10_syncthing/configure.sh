@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# modules/09_syncthing/configure.sh
+# modules/10_syncthing/configure.sh
 set -euo pipefail
 source "$(dirname "$0")/../../lib_utils.sh"
 
-TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-staging-2}"
-TS_TAILNET="${TAILSCALE_TAILNET:-tailfb0549.ts.net}"
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "$(dirname "$0")/../../environment/staging.env"
+fi
+
+TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-server}"
+TS_TAILNET="${TAILSCALE_TAILNET:-ts.net}"
 FULL_DOMAIN="${TS_HOSTNAME}.${TS_TAILNET}"
 
 inject_nginx_syncthing_routing() {
@@ -21,15 +26,13 @@ server {
     client_max_body_size 100M;
 
     location / {
-        # Forward directly via the Docker bridge to Syncthing's web admin port
-        proxy_pass http://172.17.0.1:8384;
+        proxy_pass http://127.0.0.1:8384;
 
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
 
-        # Standard buffer extensions for heavy web UI dashboard polling
         proxy_read_timeout 600s;
         proxy_send_timeout 600s;
     }

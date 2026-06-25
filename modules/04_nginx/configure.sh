@@ -3,12 +3,27 @@
 set -euo pipefail
 source "$(dirname "$0")/../../lib_utils.sh"
 
-TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-staging}"
-TS_TAILNET="${TAILSCALE_TAILNET:-tailfb0549.ts.net}"
+# Only source staging.env if not already loaded by the parent orchestrator
+if [[ "${HOMELAB_ENV_LOADED:-false}" != "true" ]]; then
+    source "$(dirname "$0")/../../environment/staging.env"
+fi
+
+TS_HOSTNAME="${TAILSCALE_HOSTNAME:-homelab-server}"
+TS_TAILNET="${TAILSCALE_TAILNET:-ts.net}"
 FULL_DOMAIN="${TS_HOSTNAME}.${TS_TAILNET}"
 
+log_info "Configuring host firewall for HTTP/HTTPS traffic..."
+if command -v firewall-cmd &>/dev/null && systemctl is-active --quiet firewalld; then
+    firewall-cmd --permanent --add-service=http
+    firewall-cmd --permanent --add-service=https
+    firewall-cmd --reload
+    log_succ "Firewall rules for port 80/443 successfully applied."
+else
+    log_warn "firewalld not active or missing; assuming ports are open."
+fi
+
 fetch_tailscale_certificates() {
-    log_info "Provisioning Let's Encrypt TLS certificates from Tailscale MagicDNS..."
+    log_info "Provisioning TLS certificates from Tailscale for: ${FULL_DOMAIN}"
 
     # Ensure Tailscale daemon is accessible before requesting keys
     if ! tailscale status &>/dev/null; then
@@ -16,18 +31,17 @@ fetch_tailscale_certificates() {
         exit 1
     fi
 
-    # --- Flawless Run Addition: Active Retry Matrix ---
-    local max_attempts=5
+    local max_attempts=10
     local attempt=1
-    local wait_sec=3
+    local wait_sec=5
 
-    log_info "Executing cryptographic certificate extraction challenge..."
+    log_info "Requesting HTTPS certificate from Tailscale ACME provider..."
     while [ ${attempt} -le ${max_attempts} ]; do
-        if tailscale cert --cert-file /fastpool/nginx/certs/ts.crt --key-file /fastpool/nginx/certs/ts.key "${FULL_DOMAIN}" 2>/dev/null; then
-            log_succ "Tailscale cryptographic certificates successfully provisioned on attempt ${attempt}."
+        if tailscale cert --cert-file /fastpool/nginx/certs/ts.crt --key-file /fastpool/nginx/certs/ts.key "${FULL_DOMAIN}"; then
+            log_succ "TLS certificates provisioned on attempt ${attempt}."
             break
         else
-            log_warn "Tailscale daemon negotiating DNS challenges... Retrying in ${wait_sec}s (Attempt ${attempt}/${max_attempts})"
+            log_warn "Certificate challenge pending... Retrying in ${wait_sec}s (Attempt ${attempt}/${max_attempts})"
             sleep ${wait_sec}
             attempt=$((attempt + 1))
         fi
@@ -35,7 +49,10 @@ fetch_tailscale_certificates() {
 
     # Hard barrier if all attempts fail
     if [ ${attempt} -gt ${max_attempts} ]; then
-        log_error "Failed to capture Tailscale certificates after ${max_attempts} attempts."
+        log_error "Failed to provision Tailscale certificates after ${max_attempts} attempts."
+        log_error "Ensure HTTPS Certificates are ENABLED in your Tailscale Admin Console:"
+        log_error "  → https://login.tailscale.com/admin/dns (toggle 'HTTPS Certificates')"
+        log_error "Also ensure MagicDNS is enabled."
         exit 1
     fi
 
