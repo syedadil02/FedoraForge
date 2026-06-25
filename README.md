@@ -5,7 +5,6 @@
 
 ---
 
-## 📖 What is this?
 **FedoraForge** is a highly resilient, state-tracked shell orchestration engine designed to transform a fresh Fedora Linux installation into a fully configured, production-grade FedoraForge deployment. 
 
 Rather than relying on massive single-point-of-failure deployment scripts, this engine uses a **Phase-based architecture** (`run_phase`). It tracks successful deployments via a `.deploy_state` file, meaning if the script is interrupted, the server reboots, or an error occurs, the orchestrator will seamlessly resume exactly where it left off without duplicating containers or corrupting data.
@@ -18,7 +17,7 @@ Rather than relying on massive single-point-of-failure deployment scripts, this 
 
 ---
 
-## 🛠️ What does it deploy?
+## 🛠️ Services deployed:
 The orchestrator configures the host operating system, establishes ZFS storage pools, configures the network firewall, and deploys the following microservices:
 
 ### 🎮 Compute & Media
@@ -64,7 +63,7 @@ The orchestrator configures the host operating system, establishes ZFS storage p
 
 ---
 
-## 🚀 Quick Start
+## 🚀 How to use?
 
 1. Clone the repository to your Fedora bare-metal machine.
 2. Make the orchestrator executable:
