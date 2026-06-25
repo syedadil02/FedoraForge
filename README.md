@@ -29,6 +29,7 @@ Rather than relying on massive single-point-of-failure deployment scripts, this 
 - **Dynamic Hardware Detection:** Automatically scans the PCI bus (`lspci`) for physical GPUs. If a bare-metal GPU is found, it dynamically auto-injects hardware passthrough (`/dev/dri`) into resource-heavy containers (like Wolf and Immich). Safely bypasses passthrough on VMs to prevent DRM crashes.
 - **Storage Offloading:** Automatically expands Fedora LVM volumes (`xfs_growfs`) and relocates Docker/Containerd image extraction layers to an NVMe ZFS pool to prevent root disk exhaustion.
 - **Secure by Default:** Integrates tightly with Tailscale (MagicDNS via `systemd-resolved`), ensuring no services are exposed to the public internet. All web traffic is routed internally via an Nginx reverse proxy using secure TLS certificates.
+- **Disaster Recovery:** Includes a fully automated backup engine using Duplicati. Read-only volume mounts protect the system from ransomware, while live Postgres/MySQL databases are automatically exported to static `.sql` dumps via nightly cronjobs before being encrypted and sent offsite.
 
 ---
 
@@ -65,7 +66,7 @@ The orchestrator configures the host operating system, establishes ZFS storage p
 
 > [!WARNING]
 > **OS Limitation:** This script is currently strictly engineered for **Fedora 44 (Server/Workstation)**. It relies heavily on `dnf5`, `systemd-resolved`, and Fedora's default Firewalld/SELinux architecture.
-> 
+>
 > [!IMPORTANT]
 > **Storage Assumptions:** The script assumes a **3-Disk Architecture**:
 > 1. OS Root Drive
@@ -93,6 +94,7 @@ The orchestrator configures the host operating system, establishes ZFS storage p
    sudo bash deploy.sh
    ```
 4. Follow the on-screen prompts to select your storage disks, configure your Tailscale Auth Key, and set your administrative passwords.
+   * *Note: The wizard securely saves your passwords and configuration to `environment/active.env`. This file is git-ignored to prevent accidental credential leaks. If you ever need to change your database passwords or Tailscale settings, you can edit that file directly.*
 5. The orchestrator will compile ZFS, pull Docker images, and initialize the databases.
 
 Once finished, navigate to your server's Tailscale domain in your browser to view your Homepage dashboard!
@@ -120,6 +122,7 @@ Because FedoraForge globally handles Nginx hot-reloading, rollback trapping, TLS
 ---
 <img width="2560" height="973" alt="Screenshot From 2026-06-25 23-03-49 (Edited)" src="https://github.com/user-attachments/assets/daa96ee4-f0f8-4a08-b6ee-53120d9d7bd9" />
 ---
+
 ## 📄 License
 
 This project is licensed under the MIT License.
