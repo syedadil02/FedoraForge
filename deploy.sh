@@ -137,6 +137,10 @@ run_wizard() {
     echo ""
     smb_pass="${smb_pass:-admin123}"
     
+    # Passwords
+    read -s -rp "[?] Create a password for the Duplicati Backup Dashboard: " duplicati_pass
+    echo ""
+    
     # Generate database password & searxng key
     local db_pass
     db_pass=$(openssl rand -hex 12)
@@ -158,6 +162,8 @@ export TAILSCALE_HOSTNAME="${host_name}"
 export TAILSCALE_TAILNET="pending-detection"
 export TAILSCALE_AUTH_KEY="${ts_auth_key}"
 export GITEA_DB_PASSWORD="${db_pass}"
+export IMMICH_DB_PASSWORD="${db_pass}"
+export DUPLICATI_PASSWORD="${duplicati_pass:-admin}"
 export CONFIG_BASE_DIR="/fastpool"
 export STORAGE_BASE_DIR="/datapool"
 export PRIMARY_INTERFACE="${primary_if}"
@@ -274,8 +280,9 @@ main() {
     run_phase "13" "Kavita eBook Server Cluster" "./modules/13_kavita/install.sh && ./modules/13_kavita/configure.sh"
     run_phase "14" "SearXNG Search Core" "./modules/14_searxng/install.sh && ./modules/14_searxng/configure.sh"
     run_phase "15" "FreshRSS Aggregator" "./modules/15_freshrss/install.sh"
-    run_phase "16" "Wolf Streaming Server" "./modules/16_wolf/install.sh && ./modules/16_wolf/configure.sh"
-    run_phase "17" "Homepage Dashboard" "./modules/17_homepage/install.sh && ./modules/17_homepage/configure.sh"
+    run_phase "16" "Wolf Cloud Gaming" "./modules/16_wolf/install.sh && ./modules/16_wolf/configure.sh"
+    run_phase "17" "Disaster Recovery Engine" "./modules/17_disaster_recovery/install.sh && ./modules/17_disaster_recovery/configure.sh"
+    run_phase "18" "Homepage Dashboard" "./modules/18_homepage/install.sh && ./modules/18_homepage/configure.sh"
 
     commit_transaction
     log_succ "Orchestrator finished processing all ${TAILSCALE_HOSTNAME}.${TAILSCALE_TAILNET} components without errors."

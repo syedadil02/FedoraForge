@@ -1,0 +1,22 @@
+services:
+  duplicati:
+    image: lscr.io/linuxserver/duplicati:latest
+    container_name: homelab_duplicati
+    network_mode: host
+    environment:
+      - PUID=${SYSTEM_UID:-1000}
+      - PGID=${SYSTEM_GID:-1000}
+      - TZ=${TIMEZONE:-UTC}
+      - CLI_ARGS=--webservice-allowed-hostnames=* --webservice-password=${DUPLICATI_PASSWORD:-admin}
+      - SETTINGS_ENCRYPTION_KEY=fedoraforge_secure_recovery_key_01
+    volumes:
+      # Internal Duplicati Configuration & Local DBs
+      - ${CONFIG_BASE_DIR:-/fastpool}/duplicati/config:/config
+      
+      # Read-only access to the entire homelab infrastructure for backup
+      - ${CONFIG_BASE_DIR:-/fastpool}:/source/fastpool:ro
+      - ${STORAGE_BASE_DIR:-/datapool}:/source/datapool:ro
+      
+      # Where local backups are placed if you aren't using the cloud
+      - ${STORAGE_BASE_DIR:-/datapool}/backups:/backups
+    restart: unless-stopped

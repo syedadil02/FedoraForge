@@ -1,0 +1,15 @@
+# modules/17_homepage/config/settings.yaml
+title: Homelab Dashboard
+background:
+  style: Cover
+  opacity: 50
+headerStyle: Clean
+layout:
+  Core Infrastructure:
+    columns: 3
+  Applications & Sync:
+    columns: 3
+  Media & Streaming:
+    columns: 3
+  Network Security & Shares:
+    columns: 2
