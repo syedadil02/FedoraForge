@@ -118,8 +118,8 @@ Once finished, navigate to your server's Tailscale domain in your browser to vie
 Because FedoraForge globally handles Nginx hot-reloading, rollback trapping, TLS provisioning, and state tracking, your custom module instantly gains all of these features automatically!
 
 ---
-
-
+<img width="2560" height="973" alt="Screenshot From 2026-06-25 23-03-49 (Edited)" src="https://github.com/user-attachments/assets/daa96ee4-f0f8-4a08-b6ee-53120d9d7bd9" />
+---
 ## 📄 License
 
 This project is licensed under the MIT License.
