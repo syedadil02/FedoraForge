@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>🚀 FedoraForge: IaC Provisioner </h1>
+  <h1>🚀 FedoraForge: Server Provisioner </h1>
   <p><strong>An Idempotent, Infrastructure-as-Code Deployment Engine for Fedora Server</strong></p>
   <p>
-    <code>Bash</code> · <code>Docker</code> · <code>ZFS</code> · <code>Nginx</code> · <code>Tailscale</code> · <code>Fedora</code> · <code>SELinux</code> · <code>Firewalld</code>
+    <code>Bash</code> · <code>Docker</code> · <code>ZFS</code> · <code>Nginx</code> · <code>Tailscale</code> · <code>Fedora</code> 
   </p>
 </div>
 
